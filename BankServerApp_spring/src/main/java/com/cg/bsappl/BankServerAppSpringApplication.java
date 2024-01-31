@@ -1,6 +1,7 @@
 package com.cg.bsappl;
 
 import java.util.InputMismatchException;
+import java.util.List;
 import java.util.Scanner;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,6 +10,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import com.cg.bsappl.service.AccountService;
 import com.cg.bsappl.service.CustomerService;
@@ -90,7 +92,7 @@ public class BankServerAppSpringApplication implements CommandLineRunner  {
     	
     }
 	
-	public static void adminPage() throws CustomerException 
+	public static void adminPage() throws CustomerException, DataIntegrityViolationException 
 	{
 		
 		Scanner s1=new Scanner(System.in);
@@ -123,13 +125,23 @@ public class BankServerAppSpringApplication implements CommandLineRunner  {
 				case 2:
 					System.out.println("Enter customer Account Number to delete");
 					int de=s1.nextInt();
+					
 					try {
+						Account ac=accountService.getAccountById(de);
+					if(ac!=null) {	
+					Customer c1=accountService.getAccountById(de).getCustomer();
+					customerService.deleteCustomer(c1.getCustomerId());	
 					accountService.deleteAccount(de);
 					System.out.println("customer Account of account number :"+de+" is deleted");
+					}
 					}
 					catch(NullPointerException e)
 					{
 						System.out.println("The account with account number: "+de+" did not exist");
+					}
+					catch(DataIntegrityViolationException e)
+					{
+						System.out.println("Parent row can't be deleted without child row");
 					}
 					break;
 				case 3:
@@ -230,7 +242,13 @@ public class BankServerAppSpringApplication implements CommandLineRunner  {
 			case 4:
 				 System.out.println("Enter your Customer Account Number");
 				    int accNum6 = s2.nextInt();
-				    
+				    List<Transaction> transactions = transactionService.getTransactionsByAccountId(accNum6);
+
+                    System.out.println("================================================================");
+                    System.out.println("Transactions for Account Number " + accNum6 + ":");
+                    for (Transaction transaction : transactions) {
+                        System.out.println(transaction);
+                    }
 				
 				    System.out.println("================================================================");
 				break;
